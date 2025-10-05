@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bubble Pop! – HTML Game with Sounds</title>
+    <style>
+      :root {
+        --bg1: #0f172a; /* slate-900 */
+        --bg2: #1e293b; /* slate-800 */
+        --accent: #22d3ee; /* cyan-400 */
+        --accent2: #a78bfa; /* violet-400 */
+        --text: #e2e8f0; /* slate-200 */
+        --muted: #94a3b8; /* slate-400 */
+        --danger: #fb7185; /* rose-400 */
+        --success: #34d399; /* emerald-400 */
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Ubuntu, Cantarell, "Noto Sans", sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            1200px 800px at 80% -10%,
+            #0ea5e9 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            1000px 700px at -10% 110%,
+            #7c3aed 0%,
+            transparent 40%
+          ),
+          linear-gradient(180deg, var(--bg1), var(--bg2));
+        overflow: hidden;
+      }
+
+      .wrap {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        height: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 16px;
+        gap: 12px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: 0.5px;
+        text-shadow: 0 3px 18px rgba(34, 211, 238, 0.25);
+      }
+
+      .title h1 {
+        margin: 0;
+        font-size: clamp(20px, 3vw, 32px);
+        font-weight: 800;
+      }
+
+      .badge {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(34, 211, 238, 0.15);
+        border: 1px solid rgba(34, 211, 238, 0.4);
+        color: var(--accent);
+      }
+
+      .panel {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 10px;
+        align-items: center;
+        background: rgba(2, 6, 23, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(6px);
+        border-radius: 16px;
+        padding: 10px 12px;
+      }
+
+      .stats {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .stat {
+        display: grid;
+        gap: 2px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stat b {
+        font-size: 16px;
+        color: var(--text);
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        background: linear-gradient(180deg, #1f2937, #0b1220);
+        color: var(--text);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow: var(--shadow);
+        transition: transform 0.05s ease, filter 0.1s ease;
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      button:active {
+        transform: translateY(1px) scale(0.99);
+      }
+      .primary {
+        background: linear-gradient(180deg, #22d3ee, #0891b2);
+        color: #012028;
+      }
+      .danger {
+        background: linear-gradient(180deg, #fb7185, #be123c);
+        color: #2b0712;
+      }
+
+      .slider {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      input[type="range"] {
+        width: 120px;
+      }
+
+      .stage-wrap {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: var(--shadow);
+        background: radial-gradient(
+            800px 500px at 10% 10%,
+            rgba(34, 211, 238, 0.12),
+            transparent 35%
+          ),
+          radial-gradient(
+            800px 500px at 90% 90%,
+            rgba(167, 139, 250, 0.12),
+            transparent 35%
+          ),
+          #020617;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+
+      footer {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .toast {
+        position: absolute;
+        inset: auto 12px 12px auto;
+        padding: 10px 14px;
+        background: rgba(2, 6, 23, 0.75);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 10px;
+        font-size: 13px;
+        color: var(--text);
+        box-shadow: var(--shadow);
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 3c3 0 5 2 5 5 0 3-5 11-5 11S7 11 7 8c0-3 2-5 5-5Z"
+              stroke="#22d3ee"
+              stroke-width="1.5"
+            />
+            <circle
+              cx="12"
+              cy="8"
+              r="2.5"
+              stroke="#a78bfa"
+              stroke-width="1.5"
+            />
+          </svg>
+          <h1>Bubble Pop!</h1>
+          <span class="badge">HTML • Canvas • Sound</span>
+        </div>
+      </header>
+
+      <div class="panel">
+        <div class="stats">
+          <div class="stat"><span>Score</span><b id="score">0</b></div>
+          <div class="stat"><span>Time</span><b id="time">60</b></div>
+          <div class="stat"><span>High Score</span><b id="high">0</b></div>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn" class="primary">Start</button>
+          <button id="pauseBtn">Pause</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+
+        <div class="controls">
+          <div class="slider">
+            <label for="volume">Volume</label>
+            <input
+              id="volume"
+              type="range"
+              min="0"
+              max="1"
+              value="0.7"
+              step="0.01"
+            />
+          </div>
+          <button id="muteBtn">Mute</button>
+        </div>
+
+        <div style="text-align: right; font-size: 12px; color: var(--muted)">
+          Click / tap bubbles to score. Golden bubbles are worth extra!
+        </div>
+      </div>
+
+      <div class="stage-wrap">
+        <canvas
+          id="stage"
+          width="1000"
+          height="540"
+          aria-label="Game stage"
+          role="img"
+        ></canvas>
+        <div id="toast" class="toast" aria-live="polite">+10 Bonus!</div>
+      </div>
+
+      <footer>
+        Built with HTML, CSS, JS and the Web Audio API. <br>
+        Praveen Panigrahi
+      </footer>
+    </div>
+
+    <script>
+      // ====== Utility ======
+      const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+      class Sound {
+        constructor() {
+          this.ctx = null; 
+          this.master = null; // master gain
+          this.muted = false;
+          this.volume = 0.7;
+        }
+        ensure() {
+          if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.master = this.ctx.createGain();
+            this.master.gain.value = this.muted ? 0 : this.volume;
+            this.master.connect(this.ctx.destination);
+          }
+        }
+        setVolume(v) {
+          this.volume = clamp(v, 0, 1);
+          if (this.master)
+            this.master.gain.setTargetAtTime(
+              this.muted ? 0 : this.volume,
+              this.ctx.currentTime,
+              0.01
+            );
+        }
+        setMuted(m) {
+          this.muted = m;
+          if (this.master)
+            this.master.gain.setTargetAtTime(
+              m ? 0 : this.volume,
+              this.ctx.currentTime,
+              0.01
+            );
+        }
+        // core synth: envelope + oscillator
+        beep({
+          freq = 440,
+          type = "sine",
+          duration = 0.12,
+          attack = 0.002,
+          release = 0.08,
+          gain = 0.6,
+        } = {}) {
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = type;
+          o.frequency.value = freq;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(gain, now + attack);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration + release);
+          o.connect(g).connect(this.master);
+          o.start(now);
+          o.stop(now + duration + release + 0.02);
+        }
+        noise({
+          duration = 0.12,
+          attack = 0.005,
+          release = 0.12,
+          gain = 0.4,
+        } = {}) {
+          if (!this.ctx) return;
+          const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+          const buffer = this.ctx.createBuffer(
+            1,
+            bufferSize,
+            this.ctx.sampleRate
+          );
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+          const src = this.ctx.createBufferSource();
+          src.buffer = buffer;
+          const g = this.ctx.createGain();
+          const now = this.ctx.currentTime;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(gain, now + attack);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration + release);
+          src.connect(g).connect(this.master);
+          src.start(now);
+          src.stop(now + duration + release + 0.02);
+        }
+        chord(
+          freqs = [440, 550, 660],
+          { duration = 0.25, gain = 0.25, type = "sine" } = {}
+        ) {
+          if (!this.ctx) return;
+          freqs.forEach((f, i) => this.beep({ freq: f, duration, gain, type }));
+        }
+        // prebuilt sfx
+        pop() {
+          this.beep({ freq: 660, type: "sine", duration: 0.08, gain: 0.5 });
+          this.noise({ duration: 0.05, gain: 0.2 });
+        }
+        bonus() {
+          const base = 740;
+          [0, 5, 12].forEach((s, i) =>
+            setTimeout(
+              () =>
+                this.beep({
+                  freq: base * Math.pow(2, s / 12),
+                  type: "triangle",
+                  duration: 0.09,
+                  gain: 0.45,
+                }),
+              i * 55
+            )
+          );
+        }
+        miss() {
+          this.beep({ freq: 180, type: "square", duration: 0.14, gain: 0.35 });
+        }
+        ui() {
+          this.beep({
+            freq: 480,
+            type: "triangle",
+            duration: 0.06,
+            gain: 0.35,
+          });
+        }
+        gameOver() {
+          this.chord([196, 233, 311], {
+            duration: 0.4,
+            gain: 0.22,
+            type: "square",
+          });
+        }
+      }
+
+      const sound = new Sound();
+
+      // ====== Game State ======
+      const canvas = document.getElementById("stage");
+      const ctx = canvas.getContext("2d");
+      let W = canvas.width,
+        H = canvas.height;
+
+      const scoreEl = document.getElementById("score");
+      const timeEl = document.getElementById("time");
+      const highEl = document.getElementById("high");
+      const toast = document.getElementById("toast");
+
+      const startBtn = document.getElementById("startBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const muteBtn = document.getElementById("muteBtn");
+      const volume = document.getElementById("volume");
+
+      let running = false;
+      let paused = false;
+      let lastStamp = 0;
+      let timer = 60; // seconds
+      let score = 0;
+      let high = Number(localStorage.getItem("bubblepop_high") || 0);
+      highEl.textContent = high;
+
+      const bubbles = [];
+
+      function onResize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+        canvas.width = Math.max(720, Math.floor(rect.width)) * scale;
+        canvas.height = Math.max(420, Math.floor(rect.height)) * scale;
+        W = canvas.width;
+        H = canvas.height;
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      }
+      window.addEventListener("resize", onResize);
+      onResize();
+
+      // ====== Bubbles ======
+      class Bubble {
+        constructor(x, y, r, vy, color, isGolden = false) {
+          this.x = x;
+          this.y = y;
+          this.r = r;
+          this.vy = vy;
+          this.color = color;
+          this.alive = true;
+          this.isGolden = isGolden;
+          this.wobble = Math.random() * Math.PI * 2;
+          this.vx = (Math.random() * 2 - 1) * 0.3;
+        }
+        update(dt) {
+          this.wobble += dt * 3;
+          this.y -= this.vy * dt;
+          this.x += Math.sin(this.wobble) * 0.8 + this.vx;
+          if (this.y + this.r < -20) {
+            this.alive = false;
+            onMiss();
+          }
+        }
+        draw(g) {
+          g.save();
+          const grd = g.createRadialGradient(
+            this.x - this.r * 0.4,
+            this.y - this.r * 0.4,
+            this.r * 0.1,
+            this.x,
+            this.y,
+            this.r
+          );
+          if (this.isGolden) {
+            grd.addColorStop(0, "#fde68a");
+            grd.addColorStop(1, "#f59e0b");
+          } else {
+            grd.addColorStop(0, "rgba(34,211,238,.9)");
+            grd.addColorStop(1, "rgba(99,102,241,.6)");
+          }
+          g.fillStyle = grd;
+          g.beginPath();
+          g.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+          g.fill();
+          // highlight
+          g.globalAlpha = 0.35;
+          g.fillStyle = "#fff";
+          g.beginPath();
+          g.ellipse(
+            this.x - this.r * 0.35,
+            this.y - this.r * 0.35,
+            this.r * 0.25,
+            this.r * 0.18,
+            -0.6,
+            0,
+            Math.PI * 2
+          );
+          g.fill();
+          g.globalAlpha = 1;
+          g.restore();
+        }
+        hit(px, py) {
+          const dx = px - this.x,
+            dy = py - this.y;
+          return dx * dx + dy * dy <= this.r * this.r;
+        }
+      }
+
+      function spawnBubble() {
+        const isGolden = Math.random() < 0.12; // 12% chance
+        const r = isGolden ? rand(24, 34) : rand(16, 28);
+        const x = rand(r, canvas.width / (window.devicePixelRatio || 1) - r);
+        const y =
+          canvas.height / (window.devicePixelRatio || 1) + r + rand(4, 30);
+        const vy = isGolden ? rand(120, 170) : rand(80, 140);
+        const color = isGolden ? "#f59e0b" : "#22d3ee";
+        bubbles.push(new Bubble(x, y, r, vy, color, isGolden));
+      }
+
+      function rand(a, b) {
+        return a + Math.random() * (b - a);
+      }
+
+      // ====== Game Loop ======
+      let spawnAcc = 0;
+      function step(ts) {
+        if (!running || paused) {
+          lastStamp = ts;
+          return requestAnimationFrame(step);
+        }
+        const dt = Math.min(1 / 20, (ts - lastStamp) / 1000) || 0; // seconds, clamp
+        lastStamp = ts;
+
+        // update
+        spawnAcc += dt;
+        if (spawnAcc > 0.7) {
+          spawnBubble();
+          spawnAcc = 0;
+        }
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          const b = bubbles[i];
+          b.update(dt);
+          if (!b.alive) bubbles.splice(i, 1);
+        }
+
+        // countdown
+        timer -= dt;
+        if (timer <= 0) {
+          timer = 0;
+          endGame();
+        }
+
+        // draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground(ctx);
+        bubbles.forEach((b) => b.draw(ctx));
+
+        timeEl.textContent = Math.ceil(timer);
+        scoreEl.textContent = score;
+
+        requestAnimationFrame(step);
+      }
+
+      function drawBackground(g) {
+        // subtle grid / bubbles backdrop
+        g.save();
+        g.globalAlpha = 0.12;
+        for (let i = 0; i < 40; i++) {
+          const x = (i * 37) % (canvas.width / (window.devicePixelRatio || 1));
+          const y = (i * 53) % (canvas.height / (window.devicePixelRatio || 1));
+          const r = i % 2 ? 18 : 12;
+          g.beginPath();
+          g.arc(x, y, r, 0, Math.PI * 2);
+          g.strokeStyle = "rgba(148,163,184,.35)";
+          g.stroke();
+        }
+        g.restore();
+      }
+
+      function startGame() {
+        sound.ensure();
+        running = true;
+        paused = false;
+        lastStamp = performance.now();
+        if (timer <= 0) {
+          timer = 60;
+          score = 0;
+          bubbles.length = 0;
+        }
+        startBtn.textContent = "Restart";
+        pauseBtn.textContent = "Pause";
+        sound.ui();
+      }
+
+      function pauseGame() {
+        if (!running) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? "Resume" : "Pause";
+        sound.ui();
+      }
+
+      function resetGame() {
+        running = false;
+        paused = false;
+        timer = 60;
+        score = 0;
+        bubbles.length = 0;
+        startBtn.textContent = "Start";
+        pauseBtn.textContent = "Pause";
+        sound.ui();
+        drawBackground(ctx);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function endGame() {
+        running = false;
+        paused = false;
+        sound.gameOver();
+        if (score > high) {
+          high = score;
+          localStorage.setItem("bubblepop_high", String(high));
+          highEl.textContent = high;
+          showToast("🥳 New High Score!");
+        }
+        showToast("Game Over");
+      }
+
+      function onMiss() {
+        if (!running) return;
+        sound.miss();
+        score = Math.max(0, score - 1);
+      }
+
+      function onHit(isGolden, clientX, clientY) {
+        if (!running) return;
+        if (isGolden) {
+          score += 10;
+          sound.bonus();
+          showToast("+10 Bonus!");
+          sparkle(clientX, clientY);
+        } else {
+          score += 1;
+          sound.pop();
+          sparkle(clientX, clientY);
+        }
+        if (score > high) {
+          highEl.textContent = score;
+        }
+      }
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toast.classList.remove("show"), 1000);
+      }
+
+      // simple particle effect
+      const sparks = [];
+      function sparkle(x, y) {
+        const rect = canvas.getBoundingClientRect();
+        const px = x - rect.left;
+        const py = y - rect.top;
+        for (let i = 0; i < 10; i++)
+          sparks.push({
+            x: px,
+            y: py,
+            vx: (Math.random() * 2 - 1) * 2,
+            vy: (Math.random() * 2 - 1) * 2,
+            life: 1,
+          });
+      }
+
+      const _drawSparks = () => {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = "#fff";
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const p = sparks[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.03;
+          p.life -= 0.03;
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+          if (p.life <= 0) sparks.splice(i, 1);
+        }
+        ctx.restore();
+        requestAnimationFrame(_drawSparks);
+      };
+      requestAnimationFrame(_drawSparks);
+
+      // Input
+      function handlePointer(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x =
+          (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+        // check top-most first
+        for (let i = bubbles.length - 1; i >= 0; i--) {
+          const b = bubbles[i];
+          if (b.hit(x, y)) {
+            bubbles.splice(i, 1);
+            onHit(
+              b.isGolden,
+              e.clientX || e.touches[0].clientX,
+              e.clientY || e.touches[0].clientY
+            );
+            return;
+          }
+        }
+      }
+
+      canvas.addEventListener("pointerdown", handlePointer, { passive: true });
+      canvas.addEventListener("touchstart", handlePointer, { passive: true });
+
+      // Controls
+      startBtn.addEventListener("click", () => {
+        startGame();
+      });
+      pauseBtn.addEventListener("click", () => pauseGame());
+      resetBtn.addEventListener("click", () => resetGame());
+
+      muteBtn.addEventListener("click", () => {
+        sound.setMuted(!sound.muted);
+        muteBtn.textContent = sound.muted ? "Unmute" : "Mute";
+        sound.ui();
+      });
+      volume.addEventListener("input", (e) => {
+        sound.setVolume(parseFloat(e.target.value));
+      });
+
+      // Boot
+      requestAnimationFrame(step);
+    </script>
+  </body>
+</html>
